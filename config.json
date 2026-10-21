@@ -8,7 +8,8 @@
     "dining:3 Night Dining Package",
     "dining:Unlimited Dining Package",
     "internet:VOOM High Speed Internet Package",
-    "roomdelivery:Laundry Wash & Fold"
+    "roomdelivery:Laundry Wash & Fold",
+    "beverage:Specialty Coffee Card"
   ],
   "booked": {
     "dining:3 Night Dining Package": 129.99,
