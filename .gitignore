@@ -1,0 +1,10 @@
+# local environment
+.venv/
+ui/node_modules/
+__pycache__/
+.DS_Store
+
+# runtime files that should not be published
+data/debug/
+data/watch.log
+site/
