@@ -42,9 +42,11 @@ In the dashboard:
 1. **Settings → Sailing**: open any category of your Cruise Planner on
    royalcaribbean.com and paste the address bar. It looks like
    `https://www.royalcaribbean.com/account/cruise-planner/category/beverage?bookingId=…&shipCode=ST&sailDate=20270627`.
-   The ship and sail date go into `config.json`; the booking number is kept only
-   in your browser, where it is used to build links into the Cruise Planner.
-   Leave **Categories** blank to fetch everything.
+   The ship and sail date go into `config.json`. The booking number is only
+   needed for the ↗ links into the Cruise Planner and is kept out of the
+   repository: put it in `config.local.json` (gitignored) for local use, or in
+   the `BOOKING_ID` repository secret for the GitHub Pages site. Leave
+   **Categories** blank to fetch everything.
 2. **Settings → ntfy topic**: install the free **ntfy** app on your phone, subscribe to a
    long random topic name (e.g. `rc-star-0627-k7q2x9`), and enter the same name here.
 3. Click **Check now**. All products appear in **All products**; use the search
@@ -98,11 +100,17 @@ same data files.
 | `categories` | category ids to fetch; empty = all (`beverage`, `shorex`, `cococay`, `dining`, `internet`, `key`, `roomdelivery`, `spa`, `onboardactivities`, `preandpost`, `celebrations`, `show`, `photoPackage`, `gifts`) |
 | `watch` | product keys (`category:Product title`) that trigger alerts; set by starring in the dashboard |
 | `booked` | product key → price you paid |
-| `ntfy_topic` | ntfy.sh topic, local use only; on GitHub use the `NTFY_TOPIC` secret |
 | `appkey` | optional override of the built-in API key |
 
-The booking number is never stored in the repository: the catalog API doesn't
-need it, and the dashboard keeps it in your browser only for building links.
+Private values live in `config.local.json` (gitignored) for local use and in
+repository secrets on GitHub:
+
+| private value | locally (`config.local.json`) | on GitHub (Actions secret) |
+|---|---|---|
+| ntfy topic for phone pushes | `ntfy_topic` | `NTFY_TOPIC` |
+| booking number, for ↗ links only | `booking_id` | `BOOKING_ID` (baked into the published site, not the repo) |
+
+The catalog API itself doesn't need the booking number.
 
 ## Host it on GitHub (no computer needed)
 
@@ -122,20 +130,23 @@ Setup:
    Pro, because Pages on the free plan needs a public repo).
 2. In the repository: **Settings → Pages → Source: GitHub Actions**.
 3. **Settings → Secrets and variables → Actions → New repository secret**:
-   `NTFY_TOPIC` = your ntfy topic. (Keep it out of `config.json`: anyone who
-   knows the topic can push to your phone.)
+   `NTFY_TOPIC` = your ntfy topic (anyone who knows the topic can push to your
+   phone, so keep it out of `config.json`) and `BOOKING_ID` = your booking
+   number (so the ↗ links work without typing it into each browser).
 4. **Actions → Check prices and publish dashboard → Run workflow** once; the
    site appears at `https://<you>.github.io/<repo>/`.
-5. On the site, open **Settings → This browser only** and enter your booking
-   number (for links) and a GitHub token so you can edit from the page. Make a
-   fine-grained token at github.com → Settings → Developer settings → Personal
-   access tokens, limited to this repository, with **Contents: read and write**
-   and **Actions: read and write**. Both values stay in that browser's local
-   storage.
+5. On the site, open **Settings → This browser only** and enter a GitHub
+   token so you can edit from the page. Make a fine-grained token at
+   github.com → Settings → Developer settings → Personal access tokens, limited
+   to this repository, with **Contents: read and write** and **Actions: read
+   and write**. It stays in that browser's local storage.
 
 What is public in a public repo: ship code, sail date, prices, and which
-products you star or have paid prices for. Not the booking number, not the
-ntfy topic, not your login (the watcher never signs in). GitHub disables
+products you star or have paid prices for. Not the ntfy topic, not your login
+(the watcher never signs in). The booking number is not in the repository
+either, but with the `BOOKING_ID` secret set it is readable by anyone who
+opens the published site's data file; skip that secret and enter it per
+browser instead if you'd rather keep it fully private. GitHub disables
 scheduled workflows in repos with no activity for 60 days; the workflow's own
 commits count as activity. `make site` previews the static build locally.
 

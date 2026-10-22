@@ -77,8 +77,10 @@ export default function App() {
 
   const editable = !!backend && backend.canEdit(token);
   const sailing = summary?.sailing;
-  const urlFor = (path) => (path && sailing && bookingId
-    ? `https://www.royalcaribbean.com${path}?bookingId=${encodeURIComponent(bookingId)}&shipCode=${sailing.ship}&sailDate=${sailing.sail_date.replace(/-/g, "")}`
+  const siteBookingId = summary?.booking_id || "";
+  const effectiveBookingId = siteBookingId || bookingId;
+  const urlFor = (path) => (path && sailing && effectiveBookingId
+    ? `https://www.royalcaribbean.com${path}?bookingId=${encodeURIComponent(effectiveBookingId)}&shipCode=${sailing.ship}&sailDate=${sailing.sail_date.replace(/-/g, "")}`
     : null);
 
   const watchSet = useMemo(() => new Set(config?.watch || []), [config]);
@@ -97,7 +99,7 @@ export default function App() {
         };
       })
       .sort((a, b) => a.catName.localeCompare(b.catName) || a.name.localeCompare(b.name));
-  }, [summary, config, watchSet, bookingId]);
+  }, [summary, config, watchSet, effectiveBookingId]);
 
   const watching = useMemo(() => rows.filter((r) => r.watched || r.booked != null), [rows]);
 
@@ -193,7 +195,8 @@ export default function App() {
       )}
 
       <Settings config={config} categories={summary.categories} onSave={saveConfig} saving={saving} backend={backend}
-        editable={editable} token={token} setToken={setToken} bookingId={bookingId} setBookingId={setBookingId} />
+        editable={editable} token={token} setToken={setToken} bookingId={bookingId} setBookingId={setBookingId}
+        siteBookingId={siteBookingId} />
 
       {check.last_output && !check.running && (
         <section className="card">
@@ -461,7 +464,7 @@ function Catalog({ rows, categories, selected, onSelect, onToggle, editable }) {
   );
 }
 
-function Settings({ config, categories, onSave, saving, backend, editable, token, setToken, bookingId, setBookingId }) {
+function Settings({ config, categories, onSave, saving, backend, editable, token, setToken, bookingId, setBookingId, siteBookingId }) {
   const isStatic = backend.mode === "static";
   const [url, setUrl] = useState("");
   const [cats, setCats] = useState((config.categories || []).join(", "));
@@ -525,10 +528,16 @@ function Settings({ config, categories, onSave, saving, backend, editable, token
 
       <h2 style={{ marginTop: 24 }}>This browser only</h2>
       <p className="muted" style={{ marginTop: 0 }}>Kept in this browser's local storage, never in the repository.</p>
-      <div className="field">
-        <label>Booking number (only used to build the ↗ links into your Cruise Planner)</label>
-        <input value={bid} onChange={(e) => setBid(e.target.value)} placeholder="e.g. 1234567" spellCheck={false} style={{ maxWidth: 260 }} />
-      </div>
+      {siteBookingId ? (
+        <p className="muted">
+          Booking number: set {isStatic ? "by the BOOKING_ID repository secret" : "in config.local.json"}, so the ↗ links already work. It isn't shown here.
+        </p>
+      ) : (
+        <div className="field">
+          <label>Booking number (only used to build the ↗ links into your Cruise Planner)</label>
+          <input type="password" autoComplete="off" value={bid} onChange={(e) => setBid(e.target.value)} placeholder="e.g. 1234567" spellCheck={false} style={{ maxWidth: 260 }} />
+        </div>
+      )}
       {isStatic && (
         <div className="field">
           <label>

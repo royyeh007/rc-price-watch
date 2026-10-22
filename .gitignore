@@ -4,7 +4,8 @@ ui/node_modules/
 __pycache__/
 .DS_Store
 
-# runtime files that should not be published
+# private / runtime files that should not be published
+config.local.json
 data/debug/
 data/watch.log
 site/

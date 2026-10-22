@@ -57,6 +57,8 @@ jobs:
         run: npm ci && npm run build
       - name: Export data for the dashboard
         working-directory: watcher
+        env:
+          BOOKING_ID: ${{ secrets.BOOKING_ID }}       # baked into the site so product links work; not in the repo
         run: python export.py ../ui/dist
 
       - uses: actions/configure-pages@v5

@@ -13,9 +13,5 @@
   "booked": {
     "dining:3 Night Dining Package": 129.99,
     "beverage:Refreshment Package": 28.99
-  },
-  "ntfy_topic": "",
-  "appkey": "",
-  "planner_url": "",
-  "pages": {}
+  }
 }

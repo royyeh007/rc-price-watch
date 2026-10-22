@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urlparse
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 CONFIG_FILE = ROOT / "config.json"
+CONFIG_LOCAL = ROOT / "config.local.json"      # gitignored: private values for local runs (booking id, ntfy topic)
 CONFIG_EXAMPLE = ROOT / "config.example.json"
 HISTORY_FILE = DATA_DIR / "history.jsonl"
 LOWEST_FILE = DATA_DIR / "lowest.json"
@@ -24,24 +25,41 @@ DEFAULT_CONFIG = {
     "categories": [],     # category ids to fetch; empty = every category of the sailing
     "watch": [],          # product keys ("category:Title") starred in the dashboard; only these notify
     "booked": {},         # product key -> price you paid
-    "ntfy_topic": "",     # local use only; on GitHub set the NTFY_TOPIC repository secret instead
+    "ntfy_topic": "",     # private: config.local.json locally, NTFY_TOPIC secret on GitHub
+    "booking_id": "",     # private: config.local.json locally, BOOKING_ID secret on GitHub (links only)
     "appkey": "",         # overrides the built-in public API key if Royal Caribbean rotates it
     "planner_url": "",    # legacy: ship / sail_date are read from it when they are not set
     "pages": {},          # legacy
 }
-PRIVATE_KEYS = ("ntfy_topic", "appkey", "planner_url", "pages")   # never exported to the public dashboard
+PRIVATE_KEYS = ("ntfy_topic", "booking_id", "appkey", "planner_url", "pages")   # never in the public config
+LOCAL_KEYS = ("ntfy_topic", "booking_id")                                        # live in config.local.json
+OPTIONAL_KEYS = ("appkey", "planner_url", "pages")                                # omitted from config.json when empty
 
 
 def load_config() -> dict:
+    """config.json (committed) overlaid with config.local.json (gitignored, private values)."""
     src = CONFIG_FILE if CONFIG_FILE.exists() else CONFIG_EXAMPLE
     cfg = json.loads(json.dumps(DEFAULT_CONFIG))
-    if src.exists():
-        cfg.update(json.loads(src.read_text(encoding="utf-8")))
+    for path in (src, CONFIG_LOCAL):
+        if path.exists():
+            cfg.update(json.loads(path.read_text(encoding="utf-8")))
     return cfg
 
 
 def save_config(cfg: dict) -> None:
-    CONFIG_FILE.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+    """Write private keys to config.local.json and everything else to config.json."""
+    local = json.loads(CONFIG_LOCAL.read_text(encoding="utf-8")) if CONFIG_LOCAL.exists() else {}
+    public = {k: v for k, v in cfg.items() if k not in LOCAL_KEYS and not (k in OPTIONAL_KEYS and not v)}
+    private = {k: cfg[k] for k in LOCAL_KEYS if cfg.get(k)}
+    CONFIG_FILE.write_text(json.dumps(public, indent=2) + "\n", encoding="utf-8")
+    if private or local:
+        CONFIG_LOCAL.write_text(json.dumps({**local, **{k: cfg.get(k, "") for k in LOCAL_KEYS}}, indent=2) + "\n",
+                                encoding="utf-8")
+
+
+def booking_id(cfg: dict | None = None) -> str:
+    """BOOKING_ID env (GitHub secret) or config.local.json; only used to build Cruise Planner links."""
+    return os.environ.get("BOOKING_ID") or (cfg or load_config()).get("booking_id") or ""
 
 
 def public_config(cfg: dict) -> dict:
@@ -207,6 +225,7 @@ def build_summary(rows: list[dict] | None = None) -> dict:
         "checks": len(rows),
         "last_ts": rows[-1]["ts"] if rows else None,
         "sailing": sailing,
+        "booking_id": booking_id(cfg),
         "categories": load_categories(),
         "products": products,
         "config": public_config(cfg),

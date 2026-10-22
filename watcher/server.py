@@ -8,7 +8,8 @@ API:
     GET  /api/summary           every product's latest/previous/lowest/highest price, page path, category names
     GET  /api/series?key=...    price changes of one product
     GET  /api/config            current config.json
-    PUT  /api/config            update ntfy_topic / ship / sail_date / categories / watch / booked
+    PUT  /api/config            update ship / sail_date / categories / watch / booked (config.json)
+                                or ntfy_topic / booking_id (config.local.json, never committed)
     GET  /api/check             is a check running, and the last check's output
     POST /api/check             run watch.py now
 """
@@ -26,7 +27,7 @@ from store import ROOT, build_summary, load_config, read_history, save_config, s
 
 UI_DIST = ROOT / "ui" / "dist"
 PORT = int(os.environ.get("PORT", "8765"))
-EDITABLE_KEYS = ("ntfy_topic", "ship", "sail_date", "currency", "categories", "watch", "booked")
+EDITABLE_KEYS = ("ntfy_topic", "booking_id", "ship", "sail_date", "currency", "categories", "watch", "booked")
 _check_lock = threading.Lock()
 _check_state = {"running": False, "last_output": ""}
 
