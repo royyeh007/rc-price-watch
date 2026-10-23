@@ -12,6 +12,12 @@ const splitKey = (key) => {
   return i < 0 ? ["", key] : [key.slice(0, i), key.slice(i + 1)];
 };
 
+// Has the price moved at all since tracking started?
+const hasMoved = (r) => r.max != null && r.lowest != null && r.max > r.lowest;
+// At the lowest price recorded since tracking started (only meaningful once the price has moved).
+const atLowest = (r) => hasMoved(r) && r.latest != null && r.latest <= r.lowest;
+const LowestPill = () => <span className="pill neutral" style={{ marginLeft: 6 }} title="Lowest price seen since tracking started">at lowest</span>;
+
 // Price you paid for a product: exact key first, then legacy loose name match.
 function bookedFor(key, booked) {
   if (!booked) return null;
@@ -277,7 +283,7 @@ function Watchlist({ rows, selected, onSelect, onToggle, onBooked, editable }) {
           <tbody>
             {rows.map((r) => {
               const belowBooked = r.booked != null && r.latest != null && r.latest < r.booked;
-              const atLow = r.lowest != null && r.latest != null && r.latest <= r.lowest;
+              const atLow = atLowest(r);
               return (
                 <tr key={r.key} className={r.key === selected ? "active" : ""} onClick={() => onSelect(r.key)}>
                   <td><Star on={r.watched} onClick={() => onToggle(r.key)} editable={editable} /></td>
@@ -289,7 +295,8 @@ function Watchlist({ rows, selected, onSelect, onToggle, onBooked, editable }) {
                   <td>
                     {belowBooked && <span className="pill good">rebook: save {money(r.booked - r.latest)}</span>}
                     {!belowBooked && atLow && <span className="pill neutral">at lowest</span>}
-                    {!belowBooked && !atLow && r.latest != null && r.lowest != null && <span className="pill bad">▲ {money(r.latest - r.lowest)} above low</span>}
+                    {!belowBooked && !atLow && hasMoved(r) && <span className="pill bad">▲ {money(r.latest - r.lowest)} above low</span>}
+                    {!belowBooked && !hasMoved(r) && <span className="muted">no change yet</span>}
                   </td>
                   <td><LastChange row={r} /></td>
                 </tr>
@@ -352,7 +359,7 @@ function TopDrops({ rows, checks, selected, onSelect, onToggle, editable }) {
                 <td><ProductName row={r} linkName /></td>
                 <td className="muted">{r.catName}</td>
                 <td className="num muted">{money(r.max)}</td>
-                <td className="num"><b>{money(r.latest)}</b></td>
+                <td className="num"><b>{money(r.latest)}</b>{atLowest(r) && <LowestPill />}</td>
                 <td className="num"><span className="pill good">▼ {money(r.drop)} · {pct(r.pct)}</span></td>
                 <td className="muted">
                   {r.changed_ts ? `${r.before_change > r.latest ? "▼" : "▲"} ${shortDate(r.changed_ts)}` : "—"}
@@ -470,7 +477,8 @@ function Catalog({ rows, categories, selected, onSelect, onToggle, editable }) {
         </select>
       </div>
       <p className="muted" style={{ marginTop: 0 }}>
-        Showing {filtered.length}. <b>Was</b> is the highest price recorded since tracking started and <b>Change</b> is how far below it the price is now.
+        Showing {filtered.length}. <b>Was</b> is the highest price recorded since tracking started, <b>Change</b> is how far below it the price is now,
+        and <b>at lowest</b> marks products currently at the lowest price seen (once their price has moved at all).
         Click a column heading to sort. ☆ watches a product (you'll be notified when its price drops); click a row for its history; ↗ opens it in the Cruise Planner.
       </p>
       <div className="scroll">
@@ -494,7 +502,7 @@ function Catalog({ rows, categories, selected, onSelect, onToggle, editable }) {
                     ? <span className="pill good">▼ {money(r.drop)} · {pct(r.pct)}</span>
                     : <span className="muted" title="At its highest recorded price">—</span>}
                 </td>
-                <td className="num">{money(r.lowest)}</td>
+                <td className="num" style={{ whiteSpace: "nowrap" }}>{money(r.lowest)}{atLowest(r) && <LowestPill />}</td>
                 <td><LastChange row={r} /></td>
               </tr>
             ))}
