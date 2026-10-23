@@ -97,3 +97,7 @@ a.ext:hover, a.ext.name:hover { text-decoration: underline; color: var(--accent)
 .star:disabled:hover { color: var(--muted); }
 input:disabled { opacity: .6; }
 code { background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+
+/* sortable table headings */
+th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+th.sortable:hover { color: var(--text); }

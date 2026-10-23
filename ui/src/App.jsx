@@ -429,12 +429,35 @@ function Detail({ row, backend, version }) {
   );
 }
 
+const SORTS = {
+  name: (a, b) => a.catName.localeCompare(b.catName) || a.name.localeCompare(b.name),
+  was: (a, b) => (b.max ?? 0) - (a.max ?? 0),
+  now: (a, b) => (b.latest ?? 0) - (a.latest ?? 0),
+  change: (a, b) => b.pct - a.pct || b.drop - a.drop,
+  lowest: (a, b) => (b.lowest ?? 0) - (a.lowest ?? 0),
+  changed: (a, b) => (b.changed_ts || "").localeCompare(a.changed_ts || ""),
+};
+
 function Catalog({ rows, categories, selected, onSelect, onToggle, editable }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
+  const [sort, setSort] = useState({ key: "name", dir: 1 });
   const catList = Object.entries(categories || {}).sort((a, b) => a[1].localeCompare(b[1]));
   const needle = q.trim().toLowerCase();
-  const filtered = rows.filter((r) => (!cat || r.cat === cat) && (!needle || r.name.toLowerCase().includes(needle)));
+  const filtered = rows
+    .filter((r) => (!cat || r.cat === cat) && (!needle || r.name.toLowerCase().includes(needle)))
+    .map((r) => {
+      const drop = r.max != null && r.latest != null ? r.max - r.latest : 0;
+      return { ...r, drop, pct: drop > 0 ? drop / r.max : 0 };
+    })
+    .sort((a, b) => sort.dir * SORTS[sort.key](a, b));
+
+  const sortBy = (key) => setSort((s) => (s.key === key ? { key, dir: -s.dir } : { key, dir: 1 }));
+  const Th = ({ k, children, num }) => (
+    <th className={`sortable ${num ? "num" : ""}`} onClick={() => sortBy(k)} title="Click to sort">
+      {children}{sort.key === k ? (sort.dir === 1 ? " ▾" : " ▴") : ""}
+    </th>
+  );
 
   return (
     <section className="card">
@@ -447,14 +470,15 @@ function Catalog({ rows, categories, selected, onSelect, onToggle, editable }) {
         </select>
       </div>
       <p className="muted" style={{ marginTop: 0 }}>
-        Showing {filtered.length}. Click ☆ to watch a product (you'll be notified when its price drops); click a row to see its price history; ↗ opens it in the Cruise Planner.
+        Showing {filtered.length}. <b>Was</b> is the highest price recorded since tracking started and <b>Change</b> is how far below it the price is now.
+        Click a column heading to sort. ☆ watches a product (you'll be notified when its price drops); click a row for its history; ↗ opens it in the Cruise Planner.
       </p>
       <div className="scroll">
         <table>
           <thead>
             <tr>
-              <th></th><th>Product</th><th>Category</th>
-              <th className="num">Now</th><th className="num">Last change</th><th className="num">Lowest</th>
+              <th></th><Th k="name">Product</Th><th>Category</th>
+              <Th k="was" num>Was</Th><Th k="now" num>Now</Th><Th k="change" num>Change</Th><Th k="lowest" num>Lowest</Th><Th k="changed">Last change</Th>
             </tr>
           </thead>
           <tbody>
@@ -463,9 +487,15 @@ function Catalog({ rows, categories, selected, onSelect, onToggle, editable }) {
                 <td><Star on={r.watched} onClick={() => onToggle(r.key)} editable={editable} /></td>
                 <td><ProductName row={r} /></td>
                 <td className="muted">{r.catName}</td>
-                <td className="num">{money(r.latest)}</td>
-                <td className="num"><LastChange row={r} /></td>
+                <td className="num muted">{money(r.max)}</td>
+                <td className="num"><b>{money(r.latest)}</b></td>
+                <td className="num">
+                  {r.drop > 0
+                    ? <span className="pill good">▼ {money(r.drop)} · {pct(r.pct)}</span>
+                    : <span className="muted" title="At its highest recorded price">—</span>}
+                </td>
                 <td className="num">{money(r.lowest)}</td>
+                <td><LastChange row={r} /></td>
               </tr>
             ))}
           </tbody>
