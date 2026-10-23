@@ -215,7 +215,8 @@ export default function App() {
   );
 }
 
-// The product's most recent price movement: "▼ $12.00 · Oct 22, 12 PM" (hover for the old price).
+// The product's most recent price movement, with both prices so a dip after a spike reads correctly:
+// "▼ $157.99 → $147.99 · Oct 22, 12 PM".
 function LastChange({ row }) {
   if (!row.changed_ts || row.before_change == null || row.latest == null) {
     return <span className="muted" title="No change since tracking started">—</span>;
@@ -223,8 +224,9 @@ function LastChange({ row }) {
   const d = row.latest - row.before_change;
   return (
     <span style={{ color: d < 0 ? "var(--good)" : "var(--bad)", whiteSpace: "nowrap" }}
-      title={`${money(row.before_change)} → ${money(row.latest)} on ${new Date(row.changed_ts).toLocaleString()}`}>
-      {d < 0 ? "▼" : "▲"} {money(Math.abs(d))} <span className="muted">· {shortDate(row.changed_ts)}</span>
+      title={`${d < 0 ? "Dropped" : "Rose"} ${money(Math.abs(d))} on ${new Date(row.changed_ts).toLocaleString()}`}>
+      {d < 0 ? "▼" : "▲"} <span className="muted">{money(row.before_change)}</span> → {money(row.latest)}
+      <span className="muted"> · {shortDate(row.changed_ts)}</span>
     </span>
   );
 }
