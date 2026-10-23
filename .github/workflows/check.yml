@@ -3,7 +3,12 @@ name: Check prices and publish dashboard
 on:
   schedule:
     - cron: "23 */6 * * *"          # every 6 hours (UTC)
-  workflow_dispatch:                 # "Check now" in the dashboard, or the Actions tab
+  workflow_dispatch:                 # "Check now" / "Send test notification" in the dashboard, or the Actions tab
+    inputs:
+      test_push:
+        description: "Send a test notification to the phone instead of checking prices"
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths: ["ui/**", "watcher/**", "requirements.txt", ".github/workflows/check.yml"]
@@ -36,9 +41,10 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}       # phone notifications; set it under Settings -> Secrets -> Actions
           PLANNER_URL: ${{ secrets.PLANNER_URL }}     # optional: overrides ship / sail_date from config.json
-        run: python watch.py
+        run: python watch.py ${{ inputs.test_push && '--test-push' || '' }}
 
       - name: Commit price data
+        if: ${{ !inputs.test_push }}
         run: |
           git config user.name "price-watch bot"
           git config user.email "actions@users.noreply.github.com"
@@ -48,22 +54,28 @@ jobs:
           git push
 
       - uses: actions/setup-node@v4
+        if: ${{ !inputs.test_push }}
         with:
           node-version: "20"
           cache: npm
           cache-dependency-path: ui/package-lock.json
       - name: Build dashboard
+        if: ${{ !inputs.test_push }}
         working-directory: ui
         run: npm ci && npm run build
       - name: Export data for the dashboard
+        if: ${{ !inputs.test_push }}
         working-directory: watcher
         env:
           BOOKING_ID: ${{ secrets.BOOKING_ID }}       # baked into the site so product links work; not in the repo
         run: python export.py ../ui/dist
 
       - uses: actions/configure-pages@v5
+        if: ${{ !inputs.test_push }}
       - uses: actions/upload-pages-artifact@v3
+        if: ${{ !inputs.test_push }}
         with:
           path: ui/dist
       - id: deploy
+        if: ${{ !inputs.test_push }}
         uses: actions/deploy-pages@v4

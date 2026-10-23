@@ -50,6 +50,7 @@ class LocalBackend {
   saveConfig(patch) { return json("/api/config", { method: "PUT", body: JSON.stringify(patch) }); }
   async startCheck() { return (await json("/api/check", { method: "POST" })).started; }
   checkStatus() { return json("/api/check"); }
+  testPush() { return json("/api/test-push", { method: "POST" }); }   // {ok, message}
 }
 
 const utf8ToB64 = (s) => btoa(unescape(encodeURIComponent(s)));
@@ -134,6 +135,16 @@ class StaticBackend {
     if (r.status !== 204) throw new Error(`GitHub API ${r.status} starting the workflow (token needs Actions: read and write)`);
     this.pending = { dispatchedAt: Date.now(), baseline: this.cached.generated_at };
     return true;
+  }
+
+  async testPush() {
+    if (!this.canCheck()) throw new Error("Add a GitHub token in Settings to send a test notification.");
+    const r = await fetch(`${this.api}/actions/workflows/check.yml/dispatches`, {
+      method: "POST", headers: this.headers({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ ref: this.branch, inputs: { test_push: true } }),
+    });
+    if (r.status !== 204) throw new Error(`GitHub API ${r.status} starting the workflow (token needs Actions: read and write)`);
+    return { ok: true, message: `Requested. GitHub Actions sends it within a minute or two (needs the NTFY_TOPIC secret). Progress: https://github.com/${this.repo}/actions` };
   }
 
   async checkStatus() {

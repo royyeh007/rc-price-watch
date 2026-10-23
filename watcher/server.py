@@ -12,6 +12,7 @@ API:
                                 or ntfy_topic / booking_id (config.local.json, never committed)
     GET  /api/check             is a check running, and the last check's output
     POST /api/check             run watch.py now
+    POST /api/test-push         send a test notification to the phone
 """
 
 import json
@@ -103,6 +104,10 @@ class Handler(SimpleHTTPRequestHandler):
         self._json({"error": "not found"}, 404)
 
     def do_POST(self):
+        if self.path.startswith("/api/test-push"):
+            proc = subprocess.run([sys.executable, str(ROOT / "watcher" / "watch.py"), "--test-push"],
+                                  capture_output=True, text=True, timeout=60)
+            return self._json({"ok": proc.returncode == 0, "message": (proc.stdout + proc.stderr).strip()[-500:]})
         if self.path.startswith("/api/check"):
             if _check_state["running"]:
                 return self._json({"started": False, "reason": "already running"})

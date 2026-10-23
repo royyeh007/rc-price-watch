@@ -14,6 +14,7 @@ Nothing else is pushed to your phone.
 
 Run:      python watch.py             (schedule this, e.g. every 6 hours, or let GitHub Actions do it)
 Preview:  python watch.py --dry-run   (fetch and print prices; record nothing)
+Test:     python watch.py --test-push (send a test notification to the phone)
 
 Environment overrides (used by the GitHub Actions workflow so secrets stay out of config.json):
   NTFY_TOPIC    ntfy.sh topic to push to
@@ -76,19 +77,23 @@ query WebProductsByCategory($category: String!, $passengerId: String, $shipCode:
 MONEY_RE = re.compile(r"[\d,]+(?:\.\d+)?")
 
 
-def notify(topic: str, title: str, message: str, priority: str = "high") -> None:
+def notify(topic: str, title: str, message: str, priority: str = "high") -> bool:
+    """Push to the phone via ntfy.sh. Returns True when ntfy accepted the message."""
     if not topic or "CHANGE-ME" in topic:
         print("[warn] ntfy topic not set; skipping push", file=sys.stderr)
-        return
+        return False
     try:
-        requests.post(
+        r = requests.post(
             f"https://ntfy.sh/{topic}",
             data=message.encode("utf-8"),
             headers={"Title": title, "Priority": priority, "Tags": "ship,moneybag"},
             timeout=15,
         )
+        r.raise_for_status()
+        return True
     except requests.RequestException as e:
         print(f"[warn] ntfy push failed: {e}", file=sys.stderr)
+        return False
 
 
 # --------------------------------------------------------------------------- sailing
@@ -292,10 +297,18 @@ def find_drops(current: dict[str, float], previous: dict[str, float], lowest: di
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dry-run", action="store_true", help="fetch and print prices without recording or notifying")
+    ap.add_argument("--test-push", action="store_true", help="send a test notification to the phone and exit")
     args = ap.parse_args()
 
     cfg = load_config()
     topic = os.environ.get("NTFY_TOPIC") or cfg.get("ntfy_topic") or ""
+    if args.test_push:
+        if not topic or "CHANGE-ME" in topic:
+            sys.exit("No ntfy topic configured (NTFY_TOPIC secret on GitHub, or ntfy_topic in config.local.json locally).")
+        ok = notify(topic, "Cruise watcher test", "Notifications work. You'll get a push like this when a watched "
+                    "product's price drops.", "default")
+        print("test notification sent" if ok else "test notification FAILED (see warning above)")
+        sys.exit(0 if ok else 1)
     current, names = fetch_all(cfg)
     per_category = Counter(k.split(":", 1)[0] for k in current)
     summary = f"{len(current)} products in {len(per_category)} categories"

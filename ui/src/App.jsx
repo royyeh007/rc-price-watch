@@ -152,6 +152,7 @@ export default function App() {
   if (!backend || !config || !summary) return <div className="app"><div className="empty">{error || "Loading…"}</div></div>;
 
   const nCats = Object.keys(summary.categories || {}).length;
+  const movedLastCheck = rows.filter((r) => r.prev != null && r.latest !== r.prev).length;
   const isStatic = backend.mode === "static";
   const rowProps = { selected, onSelect: setSelected, onToggle: toggleWatch, editable };
 
@@ -161,7 +162,7 @@ export default function App() {
         <h1>
           Cruise Price Watch
           <small>
-            {rows.length} products · {nCats} categories · {summary.checks} checks logged
+            {rows.length} products · {nCats} categories · {summary.checks} checks logged · {movedLastCheck} price {movedLastCheck === 1 ? "change" : "changes"} at the last check
             {isStatic && summary.generated_at ? ` · data as of ${shortDate(summary.generated_at)}` : ""}
           </small>
         </h1>
@@ -205,6 +206,20 @@ export default function App() {
         </section>
       )}
     </div>
+  );
+}
+
+// The product's most recent price movement: "▼ $12.00 · Oct 22, 12 PM" (hover for the old price).
+function LastChange({ row }) {
+  if (!row.changed_ts || row.before_change == null || row.latest == null) {
+    return <span className="muted" title="No change since tracking started">—</span>;
+  }
+  const d = row.latest - row.before_change;
+  return (
+    <span style={{ color: d < 0 ? "var(--good)" : "var(--bad)", whiteSpace: "nowrap" }}
+      title={`${money(row.before_change)} → ${money(row.latest)} on ${new Date(row.changed_ts).toLocaleString()}`}>
+      {d < 0 ? "▼" : "▲"} {money(Math.abs(d))} <span className="muted">· {shortDate(row.changed_ts)}</span>
+    </span>
   );
 }
 
@@ -256,7 +271,7 @@ function Watchlist({ rows, selected, onSelect, onToggle, onBooked, editable }) {
           <thead>
             <tr>
               <th></th><th>Product</th><th>Category</th>
-              <th className="num">Now</th><th className="num">Lowest seen</th><th className="num">You paid</th><th>Status</th>
+              <th className="num">Now</th><th className="num">Lowest seen</th><th className="num">You paid</th><th>Status</th><th>Last change</th>
             </tr>
           </thead>
           <tbody>
@@ -276,6 +291,7 @@ function Watchlist({ rows, selected, onSelect, onToggle, onBooked, editable }) {
                     {!belowBooked && atLow && <span className="pill neutral">at lowest</span>}
                     {!belowBooked && !atLow && r.latest != null && r.lowest != null && <span className="pill bad">▲ {money(r.latest - r.lowest)} above low</span>}
                   </td>
+                  <td><LastChange row={r} /></td>
                 </tr>
               );
             })}
@@ -438,25 +454,20 @@ function Catalog({ rows, categories, selected, onSelect, onToggle, editable }) {
           <thead>
             <tr>
               <th></th><th>Product</th><th>Category</th>
-              <th className="num">Now</th><th className="num">Change</th><th className="num">Lowest</th>
+              <th className="num">Now</th><th className="num">Last change</th><th className="num">Lowest</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((r) => {
-              const diff = r.prev == null || r.latest == null ? 0 : r.latest - r.prev;
-              return (
-                <tr key={r.key} className={r.key === selected ? "active" : ""} onClick={() => onSelect(r.key)}>
-                  <td><Star on={r.watched} onClick={() => onToggle(r.key)} editable={editable} /></td>
-                  <td><ProductName row={r} /></td>
-                  <td className="muted">{r.catName}</td>
-                  <td className="num">{money(r.latest)}</td>
-                  <td className="num" style={{ color: diff < 0 ? "var(--good)" : diff > 0 ? "var(--bad)" : "var(--muted)" }}>
-                    {diff === 0 ? "—" : (diff < 0 ? "▼ " : "▲ ") + money(Math.abs(diff))}
-                  </td>
-                  <td className="num">{money(r.lowest)}</td>
-                </tr>
-              );
-            })}
+            {filtered.map((r) => (
+              <tr key={r.key} className={r.key === selected ? "active" : ""} onClick={() => onSelect(r.key)}>
+                <td><Star on={r.watched} onClick={() => onToggle(r.key)} editable={editable} /></td>
+                <td><ProductName row={r} /></td>
+                <td className="muted">{r.catName}</td>
+                <td className="num">{money(r.latest)}</td>
+                <td className="num"><LastChange row={r} /></td>
+                <td className="num">{money(r.lowest)}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -472,10 +483,20 @@ function Settings({ config, categories, onSave, saving, backend, editable, token
   const [tok, setTok] = useState(token || "");
   const [bid, setBid] = useState(bookingId || "");
   const [localMsg, setLocalMsg] = useState("");
+  const [pushMsg, setPushMsg] = useState("");
   useEffect(() => {
     setCats((config.categories || []).join(", "));
     setTopic(config.ntfy_topic || "");
   }, [config]);
+  const testPush = async () => {
+    setPushMsg("Sending…");
+    try {
+      const r = await backend.testPush();
+      setPushMsg(r.message || (r.ok ? "Sent." : "Failed."));
+    } catch (e) {
+      setPushMsg(String(e.message || e));
+    }
+  };
   useEffect(() => { setBid(bookingId || ""); }, [bookingId]);
 
   const ids = Object.keys(categories || {});
@@ -522,9 +543,16 @@ function Settings({ config, categories, onSave, saving, backend, editable, token
           <input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="rc-star-0627-k7q2x9" />
         </div>
       )}
-      <button onClick={save} disabled={saving || !editable} title={editable ? "" : "Add a GitHub token below first"}>
-        {saving ? "Saving…" : "Save settings"}
-      </button>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <button onClick={save} disabled={saving || !editable} title={editable ? "" : "Add a GitHub token below first"}>
+          {saving ? "Saving…" : "Save settings"}
+        </button>
+        <button className="ghost" onClick={testPush} disabled={!backend.canCheck(token)}
+          title={backend.canCheck(token) ? "Pushes a test message to your phone" : "Add a GitHub token below first"}>
+          Send test notification
+        </button>
+        <span className="muted">{pushMsg}</span>
+      </div>
 
       <h2 style={{ marginTop: 24 }}>This browser only</h2>
       <p className="muted" style={{ marginTop: 0 }}>Kept in this browser's local storage, never in the repository.</p>
