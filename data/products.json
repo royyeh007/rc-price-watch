@@ -2408,5 +2408,10 @@
     "id": "Y8OR",
     "category": "gifts",
     "path": "/account/cruise-planner/category/gifts/product/Y8OR"
+  },
+  "shorex:Sport Fishing, Lunch & Beach Break": {
+    "id": "YNO4",
+    "category": "shorex",
+    "path": "/account/cruise-planner/category/shorex/product/YNO4"
   }
 }
