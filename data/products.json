@@ -2413,5 +2413,15 @@
     "id": "YNO4",
     "category": "shorex",
     "path": "/account/cruise-planner/category/shorex/product/YNO4"
+  },
+  "gifts:Inky Beach Towel & Tic Tac Toe Game": {
+    "id": "33GF",
+    "category": "gifts",
+    "path": "/account/cruise-planner/category/gifts/product/33GF"
+  },
+  "gifts:Pink Towel and Tumbler Set": {
+    "id": "Y8OQ",
+    "category": "gifts",
+    "path": "/account/cruise-planner/category/gifts/product/Y8OQ"
   }
 }
