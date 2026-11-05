@@ -2423,5 +2423,35 @@
     "id": "Y8OQ",
     "category": "gifts",
     "path": "/account/cruise-planner/category/gifts/product/Y8OQ"
+  },
+  "beverage:Party Big Package (21+)": {
+    "id": "Y8ZH",
+    "category": "beverage",
+    "path": "/account/cruise-planner/category/beverage/product/Y8ZH"
+  },
+  "beverage:Thrill Big Package (21+)": {
+    "id": "Y8ZK",
+    "category": "beverage",
+    "path": "/account/cruise-planner/category/beverage/product/Y8ZK"
+  },
+  "beverage:Thrill Big Package": {
+    "id": "Y8ZL",
+    "category": "beverage",
+    "path": "/account/cruise-planner/category/beverage/product/Y8ZL"
+  },
+  "cococay:Party Big Package (21+)": {
+    "id": "Y8ZH",
+    "category": "cococay",
+    "path": "/account/cruise-planner/category/cococay/product/Y8ZH"
+  },
+  "cococay:Thrill Big Package (21+)": {
+    "id": "Y8ZK",
+    "category": "cococay",
+    "path": "/account/cruise-planner/category/cococay/product/Y8ZK"
+  },
+  "cococay:Thrill Big Package": {
+    "id": "Y8ZL",
+    "category": "cococay",
+    "path": "/account/cruise-planner/category/cococay/product/Y8ZL"
   }
 }
