@@ -2453,5 +2453,40 @@
     "id": "Y8ZL",
     "category": "cococay",
     "path": "/account/cruise-planner/category/cococay/product/Y8ZL"
+  },
+  "shorex:Party Big Package (21+)": {
+    "id": "Y8ZH",
+    "category": "shorex",
+    "path": "/account/cruise-planner/category/shorex/product/Y8ZH"
+  },
+  "internet:Party Big Package (21+)": {
+    "id": "Y8ZH",
+    "category": "internet",
+    "path": "/account/cruise-planner/category/internet/product/Y8ZH"
+  },
+  "internet:Thrill Big Package (21+)": {
+    "id": "Y8ZK",
+    "category": "internet",
+    "path": "/account/cruise-planner/category/internet/product/Y8ZK"
+  },
+  "internet:Thrill Big Package": {
+    "id": "Y8ZL",
+    "category": "internet",
+    "path": "/account/cruise-planner/category/internet/product/Y8ZL"
+  },
+  "packages:Party Big Package (21+)": {
+    "id": "Y8ZH",
+    "category": "packages",
+    "path": "/account/cruise-planner/category/packages/product/Y8ZH"
+  },
+  "packages:Thrill Big Package (21+)": {
+    "id": "Y8ZK",
+    "category": "packages",
+    "path": "/account/cruise-planner/category/packages/product/Y8ZK"
+  },
+  "packages:Thrill Big Package": {
+    "id": "Y8ZL",
+    "category": "packages",
+    "path": "/account/cruise-planner/category/packages/product/Y8ZL"
   }
 }
