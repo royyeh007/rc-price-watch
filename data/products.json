@@ -2493,5 +2493,60 @@
     "id": "Z23H",
     "category": "shorex",
     "path": "/account/cruise-planner/category/shorex/product/Z23H"
+  },
+  "beverage:Taste of the Caribbean Tasting Experience": {
+    "id": "Y78R",
+    "category": "beverage",
+    "path": "/account/cruise-planner/category/beverage/product/Y78R"
+  },
+  "beverage:Women of Wine Tasting Experience": {
+    "id": "Y78K",
+    "category": "beverage",
+    "path": "/account/cruise-planner/category/beverage/product/Y78K"
+  },
+  "beverage:The Macallan Scotch Whiskey Tasting Experience": {
+    "id": "Y966",
+    "category": "beverage",
+    "path": "/account/cruise-planner/category/beverage/product/Y966"
+  },
+  "beverage:Jack Daniel\u2019s Bonded Series Immersive Whiskey Tasting": {
+    "id": "YN1W",
+    "category": "beverage",
+    "path": "/account/cruise-planner/category/beverage/product/YN1W"
+  },
+  "beverage:Komos Tequila & Chocolate Pairing": {
+    "id": "YNMR",
+    "category": "beverage",
+    "path": "/account/cruise-planner/category/beverage/product/YNMR"
+  },
+  "shorex:Sloths, Monkeys & Iguanas Wildlife Sanctuary": {
+    "id": "RTN2",
+    "category": "shorex",
+    "path": "/account/cruise-planner/category/shorex/product/RTN2"
+  },
+  "onboardactivities:Taste of the Caribbean Tasting Experience": {
+    "id": "Y78R",
+    "category": "onboardactivities",
+    "path": "/account/cruise-planner/category/onboardactivities/product/Y78R"
+  },
+  "onboardactivities:Women of Wine Tasting Experience": {
+    "id": "Y78K",
+    "category": "onboardactivities",
+    "path": "/account/cruise-planner/category/onboardactivities/product/Y78K"
+  },
+  "onboardactivities:The Macallan Scotch Whiskey Tasting Experience": {
+    "id": "Y966",
+    "category": "onboardactivities",
+    "path": "/account/cruise-planner/category/onboardactivities/product/Y966"
+  },
+  "onboardactivities:Jack Daniel\u2019s Bonded Series Immersive Whiskey Tasting": {
+    "id": "YN1W",
+    "category": "onboardactivities",
+    "path": "/account/cruise-planner/category/onboardactivities/product/YN1W"
+  },
+  "onboardactivities:Komos Tequila & Chocolate Pairing": {
+    "id": "YNMR",
+    "category": "onboardactivities",
+    "path": "/account/cruise-planner/category/onboardactivities/product/YNMR"
   }
 }
