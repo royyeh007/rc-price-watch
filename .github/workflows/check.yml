@@ -25,9 +25,6 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -76,6 +73,18 @@ jobs:
         if: ${{ !inputs.test_push }}
         with:
           path: ui/dist
+
+  # Separate job, like GitHub's Pages starter workflow. Deploying from the same job right after the upload
+  # sometimes finds "0 artifacts" (the artifact store lags a moment), and re-running that job uploads a
+  # second artifact, which deploy-pages also refuses. A second job starts after the artifact has settled,
+  # and if it still fails, "Re-run failed jobs" retries only the deploy with the existing artifact.
+  deploy:
+    needs: check
+    if: ${{ !inputs.test_push }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
       - id: deploy
-        if: ${{ !inputs.test_push }}
         uses: actions/deploy-pages@v4
